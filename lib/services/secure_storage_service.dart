@@ -1,9 +1,7 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:local_auth/local_auth.dart';
 
 class SecureStorageService {
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
-  final LocalAuthentication _localAuth = LocalAuthentication();
 
   static const String _keyTc = 'user_tc';
   static const String _keyPassword = 'user_password';
@@ -40,30 +38,5 @@ class SecureStorageService {
   Future<bool> hasCredentials() async {
     final tc = await _storage.read(key: _keyTc);
     return tc != null && tc.isNotEmpty;
-  }
-
-  // Biyometrik doğrulama destekleniyor mu ve kullanılabilir mi?
-  Future<bool> canUseBiometrics() async {
-    final isAvailable = await _localAuth.canCheckBiometrics;
-    final isDeviceSupported = await _localAuth.isDeviceSupported();
-    return isAvailable || isDeviceSupported;
-  }
-
-  // Biyometrik doğrulama işlemini başlat
-  Future<bool> authenticateBiometrics() async {
-    try {
-      final canUse = await canUseBiometrics();
-      if (!canUse) return false;
-
-      return await _localAuth.authenticate(
-        localizedReason: 'Cihaza tanımlı yönteminizle giriş yapın.',
-        biometricOnly: true,
-        sensitiveTransaction: true,
-        persistAcrossBackgrounding: true,
-      );
-    } catch (e) {
-      print("Biyometrik doğrulama hatası: $e");
-      return false;
-    }
   }
 }

@@ -73,19 +73,15 @@ class _LoginScreenState extends State<LoginScreen> {
         final userType = credentials['userType'];
 
         if (tc != null && password != null && userType != null) {
-          // Biyometrik doğrulama iste
-          bool authSuccess = await _storageService.authenticateBiometrics();
-
-          if (authSuccess) {
-            if (userType == 'hasta') {
-              _hastaTcController.text = tc;
-              _hastaSifreController.text = password;
-              await _hastaGirisYap(isAutoLogin: true);
-            } else if (userType == 'doktor') {
-              _doktorTcController.text = tc;
-              _doktorSifreController.text = password;
-              await _doktorGirisYap(isAutoLogin: true);
-            }
+          // Kayıtlı bilgilerle otomatik giriş yap
+          if (userType == 'hasta') {
+            _hastaTcController.text = tc;
+            _hastaSifreController.text = password;
+            await _hastaGirisYap(isAutoLogin: true);
+          } else if (userType == 'doktor') {
+            _doktorTcController.text = tc;
+            _doktorSifreController.text = password;
+            await _doktorGirisYap(isAutoLogin: true);
           }
         }
       }
@@ -109,9 +105,9 @@ class _LoginScreenState extends State<LoginScreen> {
     final result = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Biyometrik Giriş'),
+        title: const Text('Beni Hatırla'),
         content: const Text(
-          'Sonraki girişlerinizde cihazınızın biyometrik doğrulamasını (Yüz Tanıma/Parmak İzi) kullanarak hızlıca giriş yapmak ister misiniz?',
+          'Sonraki girişlerinizde otomatik giriş yapmak ister misiniz? Bilgileriniz cihazınızda güvenli şekilde saklanacaktır.',
         ),
         actions: [
           TextButton(
@@ -120,7 +116,7 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Evet, Kullan'),
+            child: const Text('Evet'),
           ),
         ],
       ),
@@ -150,9 +146,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       // 1. tcLookup alanına göre Firestore'da hastayı bul
+      final hashedLookup = AuthService.hashTcForLookup(tc);
       final query = await FirebaseFirestore.instance
           .collection('hastalar')
-          .where('tcLookup', isEqualTo: tc)
+          .where('tcLookup', isEqualTo: hashedLookup)
           .limit(1)
           .get();
 
@@ -227,9 +224,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       // 1. tcLookup alanına göre Firestore'da doktoru bul
+      final hashedLookup = AuthService.hashTcForLookup(tc);
       final query = await FirebaseFirestore.instance
           .collection('doktorlar')
-          .where('tcLookup', isEqualTo: tc)
+          .where('tcLookup', isEqualTo: hashedLookup)
           .limit(1)
           .get();
 

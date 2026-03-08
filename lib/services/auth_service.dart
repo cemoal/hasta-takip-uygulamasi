@@ -3,6 +3,22 @@ import 'dart:math';
 import 'package:crypto/crypto.dart';
 
 class AuthService {
+  /// Uygulama genelinde tcLookup alanı için kullanılan global salt.
+  /// /dev/urandom ile üretilmiştir (32 byte). Bu salt sayesinde
+  /// Firestore sızsa bile TC numaraları düz metin olarak görünmez.
+  static const String _lookupSalt =
+      'c5ccbd87521fc55c57e0816a78303d108eb5722fbcc9a26275155d3af7298b6b';
+
+  /// TC'yi global salt ile hash'leyerek Firestore lookup alanı için kullanır.
+  /// Aynı TC her zaman aynı hash'i üretir (sorgulanabilir).
+  static String hashTcForLookup(String tc) {
+    if (tc.isEmpty) return "";
+    final saltedTc = "$tc$_lookupSalt";
+    final bytes = utf8.encode(saltedTc);
+    final digest = sha256.convert(bytes);
+    return digest.toString();
+  }
+
   /// Kriptografik olarak güvenli rastgele salt üretir (16 byte, hex string döner).
   /// dart:math Random.secure() arka planda /dev/urandom kullanır.
   static String generateSalt() {

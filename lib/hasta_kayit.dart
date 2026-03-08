@@ -52,7 +52,7 @@ class _HastaKayitState extends State<HastaKayit> {
             'yas': yas,
             'uid': userCredential.user!.uid,
             'tcSalt': salt,
-            'tcLookup': tc,
+            'tcLookup': AuthService.hashTcForLookup(tc),
             'kayitTarihi': FieldValue.serverTimestamp(),
           }, SetOptions(merge: true));
 
