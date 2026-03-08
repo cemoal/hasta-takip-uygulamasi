@@ -108,6 +108,50 @@ class _HastaGecmisState extends State<HastaGecmis> {
     return "${t.day.toString().padLeft(2, '0')}/${t.month.toString().padLeft(2, '0')}/${t.year}";
   }
 
+  // Sağlık durumu ikonu oluşturucu
+  Widget _buildDurumIcon(
+    IconData icon,
+    String label,
+    bool aktif,
+    Color renk, {
+    bool invertMeaning = false,
+  }) {
+    // invertMeaning: true → aktif=true iyi demek (yeşil), aktif=false kötü demek
+    // invertMeaning: false → aktif=true kötü demek (renk), aktif=false iyi demek (yeşil)
+    final bool kotu = invertMeaning ? !aktif : aktif;
+    final Color gostergeRenk = kotu ? renk : Colors.green;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: gostergeRenk.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: gostergeRenk.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: gostergeRenk),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              color: gostergeRenk,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(width: 2),
+          Icon(
+            kotu ? Icons.warning_rounded : Icons.check_circle,
+            size: 12,
+            color: gostergeRenk,
+          ),
+        ],
+      ),
+    );
+  }
+
   // Yeni ameliyat ekleme diyalogu
   Future<void> _yeniAmeliyatEkle(BuildContext context) async {
     final turuController = TextEditingController();
@@ -578,6 +622,15 @@ class _HastaGecmisState extends State<HastaGecmis> {
 
                     final int aci = data['aciPuani'] ?? 0;
                     final bool ilacIcildiMi = data['ilacIcildiMi'] ?? false;
+                    final bool atesVar = data['atesVar'] ?? false;
+                    final bool balgamVar = data['balgamVar'] ?? false;
+                    final String balgamTuru = data['balgamTuru'] ?? '';
+                    final bool pansumanAkintiVar =
+                        data['pansumanAkintiVar'] ?? false;
+                    final bool solunumEgzersizi =
+                        data['solunumEgzersiziYapildi'] ?? false;
+                    final bool diskilama = data['diskilamaYapildi'] ?? false;
+                    final bool suIcildi = data['suIcildi'] ?? false;
                     final String donem = data['donem'] ?? '';
                     final Color riskRengi = _getRiskRengi(aci);
 
@@ -594,6 +647,24 @@ class _HastaGecmisState extends State<HastaGecmis> {
                           '${tarih.minute.toString().padLeft(2, '0')}';
                     }
 
+                    // Balgam türü Türkçe label
+                    String balgamLabel = '';
+                    if (balgamVar) {
+                      switch (balgamTuru) {
+                        case 'kanli':
+                          balgamLabel = 'Kanlı 🩸';
+                          break;
+                        case 'sari':
+                          balgamLabel = 'Sarı';
+                          break;
+                        case 'seffaf':
+                          balgamLabel = 'Şeffaf';
+                          break;
+                        default:
+                          balgamLabel = balgamTuru;
+                      }
+                    }
+
                     return Card(
                       margin: const EdgeInsets.only(bottom: 10),
                       elevation: 2,
@@ -605,90 +676,148 @@ class _HastaGecmisState extends State<HastaGecmis> {
                       ),
                       child: Padding(
                         padding: const EdgeInsets.all(16.0),
-                        child: Row(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            CircleAvatar(
-                              backgroundColor: riskRengi,
-                              radius: 24,
-                              child: Text(
-                                aci.toString(),
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 18,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    '${_getAciEmoji(aci)}  Acı Puanı: $aci / 10',
-                                    style: TextStyle(
-                                      fontSize: 15,
+                            // Üst satır: Acı puanı + tarih
+                            Row(
+                              children: [
+                                CircleAvatar(
+                                  backgroundColor: riskRengi,
+                                  radius: 24,
+                                  child: Text(
+                                    aci.toString(),
+                                    style: const TextStyle(
+                                      color: Colors.white,
                                       fontWeight: FontWeight.bold,
-                                      color: riskRengi,
+                                      fontSize: 18,
                                     ),
                                   ),
-                                  const SizedBox(height: 6),
-                                  Row(
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
-                                      Icon(
-                                        ilacIcildiMi
-                                            ? Icons.check_circle
-                                            : Icons.cancel,
-                                        size: 18,
-                                        color: ilacIcildiMi
-                                            ? Colors.green
-                                            : Colors.red,
-                                      ),
-                                      const SizedBox(width: 6),
                                       Text(
-                                        ilacIcildiMi
-                                            ? 'İlaç alındı'
-                                            : 'İlaç alınmadı',
+                                        '${_getAciEmoji(aci)}  Acı Puanı: $aci / 10',
                                         style: TextStyle(
-                                          color: ilacIcildiMi
-                                              ? Colors.green.shade700
-                                              : Colors.red.shade700,
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.bold,
+                                          color: riskRengi,
                                         ),
+                                      ),
+                                      const SizedBox(height: 6),
+                                      Row(
+                                        children: [
+                                          Icon(
+                                            ilacIcildiMi
+                                                ? Icons.check_circle
+                                                : Icons.cancel,
+                                            size: 18,
+                                            color: ilacIcildiMi
+                                                ? Colors.green
+                                                : Colors.red,
+                                          ),
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            ilacIcildiMi
+                                                ? 'İlaç alındı'
+                                                : 'İlaç alınmadı',
+                                            style: TextStyle(
+                                              color: ilacIcildiMi
+                                                  ? Colors.green.shade700
+                                                  : Colors.red.shade700,
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ],
                                   ),
-                                ],
-                              ),
+                                ),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    if (donem.isNotEmpty)
+                                      Text(
+                                        donem == 'sabah'
+                                            ? '🌅 Sabah'
+                                            : '🌙 Akşam',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                          color: donem == 'sabah'
+                                              ? Colors.amber.shade800
+                                              : Colors.indigo.shade800,
+                                        ),
+                                      ),
+                                    const SizedBox(height: 4),
+                                    const Icon(
+                                      Icons.access_time,
+                                      size: 16,
+                                      color: Colors.grey,
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      tarihStr,
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
                             ),
 
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.end,
+                            const Divider(height: 20),
+
+                            // Alt satır: 6 yeni sağlık göstergesi
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 6,
                               children: [
-                                if (donem.isNotEmpty)
-                                  Text(
-                                    donem == 'sabah' ? '🌅 Sabah' : '🌙 Akşam',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                      color: donem == 'sabah'
-                                          ? Colors.amber.shade800
-                                          : Colors.indigo.shade800,
-                                    ),
-                                  ),
-                                const SizedBox(height: 4),
-                                const Icon(
-                                  Icons.access_time,
-                                  size: 16,
-                                  color: Colors.grey,
+                                _buildDurumIcon(
+                                  Icons.thermostat,
+                                  'Ateş',
+                                  atesVar,
+                                  Colors.red,
                                 ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  tarihStr,
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey,
-                                  ),
+                                _buildDurumIcon(
+                                  Icons.air,
+                                  balgamVar
+                                      ? 'Balgam ($balgamLabel)'
+                                      : 'Balgam',
+                                  balgamVar,
+                                  Colors.orange,
+                                ),
+                                _buildDurumIcon(
+                                  Icons.healing,
+                                  'Akıntı',
+                                  pansumanAkintiVar,
+                                  Colors.red,
+                                ),
+                                _buildDurumIcon(
+                                  Icons.self_improvement,
+                                  'Solunum Egz.',
+                                  solunumEgzersizi,
+                                  Colors.teal,
+                                  invertMeaning: true,
+                                ),
+                                _buildDurumIcon(
+                                  Icons.check_circle_outline,
+                                  'Dışkılama',
+                                  diskilama,
+                                  Colors.teal,
+                                  invertMeaning: true,
+                                ),
+                                _buildDurumIcon(
+                                  Icons.water_drop,
+                                  'Su',
+                                  suIcildi,
+                                  Colors.blue,
+                                  invertMeaning: true,
                                 ),
                               ],
                             ),

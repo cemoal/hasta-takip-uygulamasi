@@ -47,6 +47,25 @@ class _DoktorHomeState extends State<DoktorHome> {
     return "Stabil";
   }
 
+  Widget _buildDurumChip(String label, Color renk) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: renk.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: renk.withValues(alpha: 0.4)),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 11,
+          color: renk,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -134,6 +153,14 @@ class _DoktorHomeState extends State<DoktorHome> {
                   final String isim = data['isim'] ?? 'İsimsiz';
                   final int aci = data['aciPuani'] ?? 0;
                   final bool ilacIcildiMi = data['ilacIcildiMi'] ?? false;
+                  final bool atesVar = data['atesVar'] ?? false;
+                  final bool balgamVar = data['balgamVar'] ?? false;
+                  final bool pansumanAkintiVar =
+                      data['pansumanAkintiVar'] ?? false;
+                  final bool solunumEgzersizi =
+                      data['solunumEgzersiziYapildi'] ?? false;
+                  final bool diskilama = data['diskilamaYapildi'] ?? false;
+                  final bool suIcildi = data['suIcildi'] ?? false;
 
                   final Color riskRengi = _getRiskRengi(aci);
 
@@ -187,6 +214,37 @@ class _DoktorHomeState extends State<DoktorHome> {
                                   const SizedBox(height: 6),
                                   Text(
                                     'İlaç alındı: ${ilacIcildiMi ? "Evet" : "Hayır"}',
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Wrap(
+                                    spacing: 6,
+                                    runSpacing: 4,
+                                    children: [
+                                      if (atesVar)
+                                        _buildDurumChip('🌡️ Ateş', Colors.red),
+                                      if (balgamVar)
+                                        _buildDurumChip(
+                                          '💨 Balgam',
+                                          Colors.orange,
+                                        ),
+                                      if (pansumanAkintiVar)
+                                        _buildDurumChip(
+                                          '🩹 Akıntı',
+                                          Colors.red,
+                                        ),
+                                      if (!solunumEgzersizi)
+                                        _buildDurumChip(
+                                          '🫁 Egzersiz ❌',
+                                          Colors.grey,
+                                        ),
+                                      if (!diskilama)
+                                        _buildDurumChip('🚽 Yok', Colors.grey),
+                                      if (!suIcildi)
+                                        _buildDurumChip(
+                                          '💧 Su ❌',
+                                          Colors.orange,
+                                        ),
+                                    ],
                                   ),
                                 ],
                               ),

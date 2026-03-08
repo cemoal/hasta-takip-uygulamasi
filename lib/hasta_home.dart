@@ -25,6 +25,15 @@ class _HastaHomeState extends State<HastaHome> {
   double _aciPuani = 5.0;
   bool _ilacIcildiMi = false;
 
+  // Yeni sağlık takip alanları
+  bool _atesVar = false;
+  bool _balgamVar = false;
+  String _balgamTuru = 'seffaf'; // 'kanli', 'sari', 'seffaf'
+  bool _pansumanAkintiVar = false;
+  bool _solunumEgzersiziYapildi = false;
+  bool _diskilamaYapildi = false;
+  bool _suIcildi = false;
+
   // Yükleniyor animasyonu için kontrol değişkeni
   bool _yukleniyor = false;
 
@@ -263,14 +272,23 @@ class _HastaHomeState extends State<HastaHome> {
       var veritabani = FirebaseFirestore.instance;
 
       // 2. 'hastalar' koleksiyonuna ekle (veya güncelle)
-      await veritabani.collection('hastalar').doc(widget.hastaId).set(
-        {
-          'aciPuani': _aciPuani.round(), // Double'ı Int yap
-          'ilacIcildiMi': _ilacIcildiMi,
-          'sonGuncelleme': FieldValue.serverTimestamp(),
-        },
-        SetOptions(merge: true),
-      ); // Eskiden olan isim/yas alanının üstüne yazmamak için merge: true kullanıyoruz!
+      final veriMap = {
+        'aciPuani': _aciPuani.round(),
+        'ilacIcildiMi': _ilacIcildiMi,
+        'atesVar': _atesVar,
+        'balgamVar': _balgamVar,
+        'balgamTuru': _balgamVar ? _balgamTuru : null,
+        'pansumanAkintiVar': _pansumanAkintiVar,
+        'solunumEgzersiziYapildi': _solunumEgzersiziYapildi,
+        'diskilamaYapildi': _diskilamaYapildi,
+        'suIcildi': _suIcildi,
+        'sonGuncelleme': FieldValue.serverTimestamp(),
+      };
+
+      await veritabani
+          .collection('hastalar')
+          .doc(widget.hastaId)
+          .set(veriMap, SetOptions(merge: true));
 
       // Geçmiş kayıtlarına da ekle (silinmez, birikir)
       await veritabani
@@ -278,10 +296,9 @@ class _HastaHomeState extends State<HastaHome> {
           .doc(widget.hastaId)
           .collection('gecmis')
           .add({
-            'aciPuani': _aciPuani.round(),
-            'ilacIcildiMi': _ilacIcildiMi,
+            ...veriMap,
             'tarih': FieldValue.serverTimestamp(),
-            'donem': _getCurrentDonem(), // sabah veya aksam
+            'donem': _getCurrentDonem(),
           });
 
       if (mounted) {
@@ -673,6 +690,220 @@ class _HastaHomeState extends State<HastaHome> {
               secondary: Icon(
                 Icons.medication,
                 color: _ilacIcildiMi ? Colors.teal : Colors.grey,
+                size: 30,
+              ),
+            ),
+
+            const Divider(height: 40),
+
+            // --- ATEŞ TAKİBİ ---
+            const Text(
+              "🌡️ Ateş Durumu",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 10),
+            SwitchListTile(
+              title: const Text("Ateşim var"),
+              subtitle: _atesVar
+                  ? const Text(
+                      "Doktorunuzu bilgilendirin.",
+                      style: TextStyle(color: Colors.red),
+                    )
+                  : const Text(
+                      "Ateşiniz yok, harika!",
+                      style: TextStyle(color: Colors.green),
+                    ),
+              value: _atesVar,
+              activeThumbColor: Colors.red,
+
+              onChanged: (bool deger) {
+                setState(() => _atesVar = deger);
+              },
+              secondary: Icon(
+                Icons.thermostat,
+                color: _atesVar ? Colors.red : Colors.grey,
+                size: 30,
+              ),
+            ),
+
+            const Divider(height: 40),
+
+            // --- BALGAM TAKİBİ ---
+            const Text(
+              "💨 Balgam Durumu",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 10),
+            SwitchListTile(
+              title: const Text("Balgamım var"),
+              subtitle: _balgamVar
+                  ? const Text(
+                      "Balgam türünü seçin.",
+                      style: TextStyle(color: Colors.orange),
+                    )
+                  : const Text(
+                      "Balgam yok.",
+                      style: TextStyle(color: Colors.green),
+                    ),
+              value: _balgamVar,
+              activeThumbColor: Colors.orange,
+
+              onChanged: (bool deger) {
+                setState(() => _balgamVar = deger);
+              },
+              secondary: Icon(
+                Icons.air,
+                color: _balgamVar ? Colors.orange : Colors.grey,
+                size: 30,
+              ),
+            ),
+            if (_balgamVar) ...[
+              const SizedBox(height: 8),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: DropdownButtonFormField<String>(
+                  initialValue: _balgamTuru,
+                  decoration: const InputDecoration(
+                    labelText: "Balgam Türü",
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.color_lens),
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: 'seffaf', child: Text('Şeffaf')),
+                    DropdownMenuItem(value: 'sari', child: Text('Sarı')),
+                    DropdownMenuItem(value: 'kanli', child: Text('Kanlı 🩸')),
+                  ],
+                  onChanged: (String? yeniDeger) {
+                    if (yeniDeger != null) {
+                      setState(() => _balgamTuru = yeniDeger);
+                    }
+                  },
+                ),
+              ),
+            ],
+
+            const Divider(height: 40),
+
+            // --- PANSUMAN DURUMU ---
+            const Text(
+              "🩹 Pansuman Durumu",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 10),
+            SwitchListTile(
+              title: const Text("Pansumanda akıntı var"),
+              subtitle: _pansumanAkintiVar
+                  ? const Text(
+                      "Akıntı mevcut, doktorunuza bildirin.",
+                      style: TextStyle(color: Colors.red),
+                    )
+                  : const Text(
+                      "Akıntı yok, temiz.",
+                      style: TextStyle(color: Colors.green),
+                    ),
+              value: _pansumanAkintiVar,
+              activeThumbColor: Colors.red,
+
+              onChanged: (bool deger) {
+                setState(() => _pansumanAkintiVar = deger);
+              },
+              secondary: Icon(
+                Icons.healing,
+                color: _pansumanAkintiVar ? Colors.red : Colors.grey,
+                size: 30,
+              ),
+            ),
+
+            const Divider(height: 40),
+
+            // --- SOLUNUM EGZERSİZİ ---
+            const Text(
+              "🫁 Solunum Egzersizi",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 10),
+            SwitchListTile(
+              title: const Text("Solunum egzersizimi yaptım"),
+              subtitle: _solunumEgzersiziYapildi
+                  ? const Text(
+                      "Harikasın! Düzenli devam et.",
+                      style: TextStyle(color: Colors.green),
+                    )
+                  : const Text(
+                      "Solunum egzersizini yapmayı unutma!",
+                      style: TextStyle(color: Colors.orange),
+                    ),
+              value: _solunumEgzersiziYapildi,
+              activeThumbColor: Colors.teal,
+              onChanged: (bool deger) {
+                setState(() => _solunumEgzersiziYapildi = deger);
+              },
+              secondary: Icon(
+                Icons.self_improvement,
+                color: _solunumEgzersiziYapildi ? Colors.teal : Colors.grey,
+                size: 30,
+              ),
+            ),
+
+            const Divider(height: 40),
+
+            // --- DIŞKILAMA KONTROLÜ ---
+            const Text(
+              "🚽 Dışkılama Kontrolü",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 10),
+            SwitchListTile(
+              title: const Text("Bugün dışkılama yaptım"),
+              subtitle: _diskilamaYapildi
+                  ? const Text(
+                      "Kaydedildi.",
+                      style: TextStyle(color: Colors.green),
+                    )
+                  : const Text(
+                      "Henüz yapılmadı.",
+                      style: TextStyle(color: Colors.grey),
+                    ),
+              value: _diskilamaYapildi,
+              activeThumbColor: Colors.teal,
+              onChanged: (bool deger) {
+                setState(() => _diskilamaYapildi = deger);
+              },
+              secondary: Icon(
+                Icons.check_circle_outline,
+                color: _diskilamaYapildi ? Colors.teal : Colors.grey,
+                size: 30,
+              ),
+            ),
+
+            const Divider(height: 40),
+
+            // --- SU HATIRLATICI ---
+            const Text(
+              "💧 Su İçme Hatırlatıcı",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 10),
+            SwitchListTile(
+              title: const Text("Yeterli su içtim"),
+              subtitle: _suIcildi
+                  ? const Text(
+                      "Aferin! Su içmeye devam et.",
+                      style: TextStyle(color: Colors.blue),
+                    )
+                  : const Text(
+                      "Günlük su ihtiyacını karşıla!",
+                      style: TextStyle(color: Colors.orange),
+                    ),
+              value: _suIcildi,
+              activeThumbColor: Colors.blue,
+
+              onChanged: (bool deger) {
+                setState(() => _suIcildi = deger);
+              },
+              secondary: Icon(
+                Icons.water_drop,
+                color: _suIcildi ? Colors.blue : Colors.grey,
                 size: 30,
               ),
             ),
