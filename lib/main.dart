@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -90,7 +91,7 @@ class _LoginScreenState extends State<LoginScreen> {
         }
       }
     } catch (e) {
-      print("Kayıtlı oturum kontrol hatası: $e");
+      if (kDebugMode) debugPrint("Kayıtlı oturum kontrol hatası: $e");
     } finally {
       if (mounted) setState(() => _yukleniyor = false);
     }
@@ -152,7 +153,7 @@ class _LoginScreenState extends State<LoginScreen> {
       // 1. tcLookup alanına göre Firestore'da hastayı bul
       final query = await FirebaseFirestore.instance
           .collection('hastalar')
-          .where('tcLookup', isEqualTo: tc)
+          .where('tcLookup', isEqualTo: AuthService.hashTcForLookup(tc))
           .limit(1)
           .get();
 
@@ -229,7 +230,7 @@ class _LoginScreenState extends State<LoginScreen> {
       // 1. tcLookup alanına göre Firestore'da doktoru bul
       final query = await FirebaseFirestore.instance
           .collection('doktorlar')
-          .where('tcLookup', isEqualTo: tc)
+          .where('tcLookup', isEqualTo: AuthService.hashTcForLookup(tc))
           .limit(1)
           .get();
 

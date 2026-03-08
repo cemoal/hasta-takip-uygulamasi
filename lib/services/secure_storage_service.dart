@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:local_auth/local_auth.dart';
 
@@ -62,7 +63,7 @@ class SecureStorageService {
         persistAcrossBackgrounding: true,
       );
     } catch (e) {
-      print("Biyometrik doğrulama hatası: $e");
+      if (kDebugMode) debugPrint("Biyometrik doğrulama hatası: $e");
       return false;
     }
   }

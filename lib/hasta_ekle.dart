@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'services/auth_service.dart';
 
 class HastaEkle extends StatefulWidget {
   const HastaEkle({super.key});
@@ -39,7 +40,7 @@ class _HastaEkleState extends State<HastaEkle> {
       // 1. tcLookup alanı ile hastayı bul
       final query = await veritabani
           .collection('hastalar')
-          .where('tcLookup', isEqualTo: tc)
+          .where('tcLookup', isEqualTo: AuthService.hashTcForLookup(tc))
           .limit(1)
           .get();
 

@@ -49,7 +49,7 @@ class _DoktorKayitState extends State<DoktorKayit> {
             'isim': isim,
             'tcHash': hashedTc,
             'tcSalt': salt,
-            'tcLookup': tc,
+            'tcLookup': AuthService.hashTcForLookup(tc),
             'hastalar': [],
             'kayitTarihi': FieldValue.serverTimestamp(),
           });

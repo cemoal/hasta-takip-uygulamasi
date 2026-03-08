@@ -2,6 +2,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_sound/flutter_sound.dart';
@@ -51,7 +52,7 @@ class _HastaGecmisState extends State<HastaGecmis> {
     setState(() => _audioYukleniyor = true);
     try {
       final bytes = base64Decode(base64Str);
-      print('[SES] Decode edildi: ${bytes.length} byte');
+      if (kDebugMode) debugPrint('[SES] Decode edildi: ${bytes.length} byte');
 
       if (bytes.isEmpty) {
         throw Exception('Ses verisi boş!');
@@ -60,20 +61,20 @@ class _HastaGecmisState extends State<HastaGecmis> {
       final tempDir = await getTemporaryDirectory();
       final tempFile = File('${tempDir.path}/oksuruk_temp.m4a');
       await tempFile.writeAsBytes(bytes);
-      print('[SES] Dosyaya yazıldı: ${tempFile.path}');
+      if (kDebugMode) debugPrint('[SES] Dosyaya yazıldı: ${tempFile.path}');
 
       await _player.startPlayer(
         fromURI: tempFile.path,
         codec: Codec.aacMP4,
         whenFinished: () {
-          print('[SES] Oynatma bitti');
+          if (kDebugMode) debugPrint('[SES] Oynatma bitti');
           if (mounted) setState(() => _oynatiliyor = false);
         },
       );
-      print('[SES] startPlayer çağrıldı');
+      if (kDebugMode) debugPrint('[SES] startPlayer çağrıldı');
       setState(() => _oynatiliyor = true);
     } catch (e) {
-      print('[SES HATA] $e');
+      if (kDebugMode) debugPrint('[SES HATA] $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
